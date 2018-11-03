@@ -4,6 +4,15 @@ const getElementName = (node) => {
   return node.openingElement.name.name;
 };
 
+const buildAppInitDeclaration = () => {
+  const appIdentifier = t.identifier('app');
+  const expressIdentifier = t.indentifier('express');
+
+  return t.variableDeclaration('const', [
+    t.variableDeclarator(appIdentifier, t.callExpression(expressIdentifier, []))
+  ]);
+};
+
 const expressJsx = function({ types: t }) {
   return {
     inherits: require('@babel/plugin-syntax-jsx').default,
@@ -17,9 +26,11 @@ const expressJsx = function({ types: t }) {
         // Iterate over app children
 
         // Build app declaration
+        const appVariableDeclations = buildAppInitDeclaration();
 
         // Replace app
         path.replaceWithMultiple([
+          appVariableDeclations
         ]);
       }
     }
