@@ -1,0 +1,15 @@
+{
+  "name": "babel-plugin-jsx-express",
+  "version": "0.0.1",
+  "description": "Babel plugin to write express applications with JSX",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nicholas <nmmascia@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-syntax-jsx": "^7.0.0"
+  }
+}
