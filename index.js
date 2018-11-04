@@ -7,10 +7,12 @@ const getElementName = (node) => {
 const buildAppInitDeclaration = (t) => {
   const appIdentifier = t.identifier('app');
   const expressIdentifier = t.identifier('express');
+  const variableDeclarator = t.variableDeclarator(
+    appIdentifier,
+    t.callExpression(expressIdentifier, [])
+  );
 
-  return t.variableDeclaration('const', [
-    t.variableDeclarator(appIdentifier, t.callExpression(expressIdentifier, []))
-  ]);
+  return t.variableDeclaration('const', [variableDeclarator]);
 };
 
 const buildListenExpression = (t, child) => {
