@@ -33,7 +33,11 @@ const getMiddlewareForNode = (t, node) => {
     return expression;
   } else {
     // Find the middleware passed via middleware prop
-    return node.openingElement.attributes[0].value.expression;
+    const middle = node.openingElement.attributes.find((attr) => {
+      return attr.name.name === 'middleware';
+    }).value.expression;
+
+    return middle;
   }
 };
 
@@ -66,6 +70,8 @@ const buildRouteCallExpression = (t, node) => {
   const routeIdentifier = t.identifier('route');
   const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
   const { path } = getAttributesAsObj(node);
+
+  console.log(path);
   const callExpressionForRoute = t.callExpression(
     memberExpression,
     [t.stringLiteral(path)]
@@ -93,6 +99,15 @@ const buildRouteCallExpression = (t, node) => {
   return lastCallExpression;
 };
 
+const buildMiddlewareExpression = (t, node) => {
+  const appIdentifier = t.identifier('app');
+  const middlewareIdentifier = t.identifier(getElementName(node));
+  const { path } = getAttributesAsObj(node);
+  const middleware = getMiddlewareForNode(t, node);
+  const memberExpression = t.memberExpression(appIdentifier, middlewareIdentifier);
+  return t.callExpression(memberExpression, [t.stringLiteral(path), middleware]);
+};
+
 const expressJsx = function({ types: t }) {
   return {
     inherits: require('@babel/plugin-syntax-jsx').default,
@@ -117,6 +132,8 @@ const expressJsx = function({ types: t }) {
             const routeCallExpression = buildRouteCallExpression(t, child);
             return routeCallExpression;
           }
+
+          return buildMiddlewareExpression(t, child);
         });
 
         // Build app declaration
@@ -148,6 +165,20 @@ const express = require('express');
       }}
     </post>
   </route>
+
+  <get
+    path="/health"
+    middleware={(req, res, next) => {
+      res.send(200);
+    }}
+  />
+
+  <get path="/ok">
+    {(req, res, next) => {
+      res.send(200)
+    }}
+  </get>
+
   <listen port={8080} />
 </app>
 `
