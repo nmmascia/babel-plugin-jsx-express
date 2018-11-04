@@ -4,13 +4,24 @@ const getElementName = (node) => {
   return node.openingElement.name.name;
 };
 
-const buildAppInitDeclaration = () => {
+const buildAppInitDeclaration = (t) => {
   const appIdentifier = t.identifier('app');
-  const expressIdentifier = t.indentifier('express');
+  const expressIdentifier = t.identifier('express');
 
   return t.variableDeclaration('const', [
     t.variableDeclarator(appIdentifier, t.callExpression(expressIdentifier, []))
   ]);
+};
+
+const buildListenExpression = (t, child) => {
+  const appIdentifier = t.identifier('app');
+  const listenIdentifier = t.identifier('listen');
+  const memberExpression = t.memberExpression(appIdentifier, listenIdentifier);
+
+  return t.callExpression(
+    memberExpression,
+    [t.numericLiteral(8080)]
+  );
 };
 
 const expressJsx = function({ types: t }) {
@@ -24,13 +35,21 @@ const expressJsx = function({ types: t }) {
         }
 
         // Iterate over app children
+        const appExpressions = t.react.buildChildren(path.node).map((child) => {
+          const childName = getElementName(child);
+
+          if (childName === 'listen') {
+            return buildListenExpression(t, child);
+          }
+        });
 
         // Build app declaration
-        const appVariableDeclations = buildAppInitDeclaration();
+        const appVariableDeclations = buildAppInitDeclaration(t);
 
         // Replace app
         path.replaceWithMultiple([
-          appVariableDeclations
+          appVariableDeclations,
+          ...appExpressions
         ]);
       }
     }
@@ -41,6 +60,7 @@ const example = `
 const express = require('express');
 
 <app>
+  <listen port={8080} />
 </app>
 `
 
