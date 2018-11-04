@@ -65,10 +65,10 @@ const buildRouteCallExpression = (t, node) => {
   const appIdentifier = t.identifier('app');
   const routeIdentifier = t.identifier('route');
   const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
-  const { route } = getAttributesAsObj(node);
+  const { path } = getAttributesAsObj(node);
   const callExpressionForRoute = t.callExpression(
     memberExpression,
-    [t.stringLiteral(route)]
+    [t.stringLiteral(path)]
   );
 
   // Build out the call expressions
@@ -136,7 +136,7 @@ const example = `
 const express = require('express');
 
 <app>
-  <route route="/resource">
+  <route path="/resource">
     <get
       middleware={(req, res, next) => {
         res.send(200);
