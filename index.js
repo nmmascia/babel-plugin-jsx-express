@@ -7,7 +7,10 @@ const getElementName = (node) => {
 const getAttributesAsObj = (node) => {
   if (!node.openingElement.attributes.length) return [];
   return node.openingElement.attributes.reduce((acc, curr) => {
-    return Object.assign({}, acc, { [curr.name.name]: curr.value.expression.value });
+    const value = curr.value.type === 'JSXExpressionContainer'
+      ? curr.value.expression.value
+      : curr.value.value;
+    return Object.assign({}, acc, { [curr.name.name]: value });
   }, {})
 };
 
@@ -34,6 +37,18 @@ const buildListenExpression = (t, node) => {
   );
 };
 
+const buildRouteCallExpression = (t, node) => {
+  const appIdentifier = t.identifier('app');
+  const routeIdentifier = t.identifier('route');
+  const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
+  const { route } = getAttributesAsObj(node);
+
+  return t.callExpression(
+    memberExpression,
+    [t.stringLiteral(route)]
+  );
+};
+
 const expressJsx = function({ types: t }) {
   return {
     inherits: require('@babel/plugin-syntax-jsx').default,
@@ -50,6 +65,11 @@ const expressJsx = function({ types: t }) {
 
           if (childName === 'listen') {
             return buildListenExpression(t, child);
+          }
+
+          if (childName === 'route') {
+            const routeCallExpression = buildRouteCallExpression(t, child);
+            return routeCallExpression;
           }
         });
 
@@ -70,6 +90,7 @@ const example = `
 const express = require('express');
 
 <app>
+  <route route="/resource" />
   <listen port={8080} />
 </app>
 `
