@@ -7,6 +7,11 @@ const getElementName = (node) => {
 const getAttributesAsObj = (node) => {
   if (!node.openingElement.attributes.length) return [];
   return node.openingElement.attributes.reduce((acc, curr) => {
+    /*
+      If we're looking at a JSXExpressionContainer
+      we'll have different node structure than if
+      the prop is just a string literal
+    */
     const value = curr.value.type === 'JSXExpressionContainer'
       ? curr.value.expression.value
       : curr.value.value;
@@ -42,6 +47,13 @@ const buildRouteCallExpression = (t, node) => {
   const routeIdentifier = t.identifier('route');
   const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
   const { route } = getAttributesAsObj(node);
+  let chainedCallExpressions;
+  const children = t.react.buildChildren(node)
+  if (children.length) {
+    console.log('ok')
+  } else {
+    console.log('not ok')
+  }
 
   return t.callExpression(
     memberExpression,
@@ -63,10 +75,12 @@ const expressJsx = function({ types: t }) {
         const appExpressions = t.react.buildChildren(path.node).map((child) => {
           const childName = getElementName(child);
 
+          // Build out app.listen();
           if (childName === 'listen') {
             return buildListenExpression(t, child);
           }
 
+          // Build out app.route()
           if (childName === 'route') {
             const routeCallExpression = buildRouteCallExpression(t, child);
             return routeCallExpression;
@@ -90,7 +104,9 @@ const example = `
 const express = require('express');
 
 <app>
-  <route route="/resource" />
+  <route route="/resource">
+    <get />
+  </route>
   <listen port={8080} />
 </app>
 `
