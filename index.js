@@ -4,6 +4,13 @@ const getElementName = (node) => {
   return node.openingElement.name.name;
 };
 
+const getAttributesAsObj = (node) => {
+  if (!node.openingElement.attributes.length) return [];
+  return node.openingElement.attributes.reduce((acc, curr) => {
+    return Object.assign({}, acc, { [curr.name.name]: curr.value.expression.value });
+  }, {})
+};
+
 const buildAppInitDeclaration = (t) => {
   const appIdentifier = t.identifier('app');
   const expressIdentifier = t.identifier('express');
@@ -19,10 +26,11 @@ const buildListenExpression = (t, node) => {
   const appIdentifier = t.identifier('app');
   const listenIdentifier = t.identifier('listen');
   const memberExpression = t.memberExpression(appIdentifier, listenIdentifier);
+  const { port } = getAttributesAsObj(node);
 
   return t.callExpression(
     memberExpression,
-    [t.numericLiteral(8080)]
+    [t.numericLiteral(port)]
   );
 };
 
