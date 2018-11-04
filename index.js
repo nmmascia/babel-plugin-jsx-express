@@ -43,10 +43,18 @@ const buildListenExpression = (t, node) => {
 };
 
 const buildRouteCallExpression = (t, node) => {
+  // Build out call expresion for app.route()
   const appIdentifier = t.identifier('app');
   const routeIdentifier = t.identifier('route');
   const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
   const { route } = getAttributesAsObj(node);
+  const callExpressionForRoute = t.callExpression(
+    memberExpression,
+    [t.stringLiteral(route)]
+  );
+
+  // Build out the call expressions
+  // for nested get, post, put, etc.
   let chainedCallExpressions;
   const children = t.react.buildChildren(node)
   if (children.length) {
@@ -55,10 +63,7 @@ const buildRouteCallExpression = (t, node) => {
     console.log('not ok')
   }
 
-  return t.callExpression(
-    memberExpression,
-    [t.stringLiteral(route)]
-  );
+  return callExpressionForRoute;
 };
 
 const expressJsx = function({ types: t }) {
