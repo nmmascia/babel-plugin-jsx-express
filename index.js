@@ -15,7 +15,7 @@ const buildAppInitDeclaration = (t) => {
   return t.variableDeclaration('const', [variableDeclarator]);
 };
 
-const buildListenExpression = (t, child) => {
+const buildListenExpression = (t, node) => {
   const appIdentifier = t.identifier('app');
   const listenIdentifier = t.identifier('listen');
   const memberExpression = t.memberExpression(appIdentifier, listenIdentifier);
