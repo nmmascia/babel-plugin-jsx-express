@@ -4,6 +4,10 @@ const getElementName = (node) => {
   return node.openingElement.name.name;
 };
 
+const getPropExpression = (node) => {
+
+}
+
 const getAttributesAsObj = (node) => {
   if (!node.openingElement.attributes.length) return [];
   return node.openingElement.attributes.reduce((acc, curr) => {
@@ -15,12 +19,22 @@ const getAttributesAsObj = (node) => {
     const value = curr.value.type === 'JSXExpressionContainer'
       ? curr.value.expression.value
       : curr.value.value;
+
     return Object.assign({}, acc, { [curr.name.name]: value });
   }, {})
 };
 
-const buildNestedRouteDeclaration = (t, node) => {
-
+const getMiddlewareForNode = (t, node) => {
+  if (node.children.length) {
+    // Find the middleware passed as a function child
+    const { expression } = node.children.find((child) => {
+      return child.type === 'JSXExpressionContainer';
+    });
+    return expression;
+  } else {
+    // Find the middleware passed via middleware prop
+    return node.openingElement.attributes[0].value.expression;
+  }
 };
 
 const buildAppInitDeclaration = (t) => {
@@ -65,6 +79,7 @@ const buildRouteCallExpression = (t, node) => {
     children.forEach((child) => {
       const childName = getElementName(child);
       const childIdentifier = t.identifier(childName);
+      const middleware = getMiddlewareForNode(t, child);
       // Chain call + member expressions here since each nested JSX element
       // is a chained call expression on the last call expression
       // e.g.
@@ -72,7 +87,7 @@ const buildRouteCallExpression = (t, node) => {
       // app.route.get() -> app.route().get().post()
       const currentMemberExpression = t.memberExpression(lastCallExpression, childIdentifier);
       // return the expression for the next iteration
-      lastCallExpression = t.callExpression(currentMemberExpression, []);
+      lastCallExpression = t.callExpression(currentMemberExpression, [middleware]);
     });
   }
   return lastCallExpression;
