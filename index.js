@@ -19,6 +19,10 @@ const getAttributesAsObj = (node) => {
   }, {})
 };
 
+const buildNestedRouteDeclaration = (t, node) => {
+
+};
+
 const buildAppInitDeclaration = (t) => {
   const appIdentifier = t.identifier('app');
   const expressIdentifier = t.identifier('express');
@@ -55,15 +59,23 @@ const buildRouteCallExpression = (t, node) => {
 
   // Build out the call expressions
   // for nested get, post, put, etc.
-  let chainedCallExpressions;
+  let lastCallExpression = callExpressionForRoute;
   const children = t.react.buildChildren(node)
   if (children.length) {
-    console.log('ok')
-  } else {
-    console.log('not ok')
+    children.forEach((child) => {
+      const childName = getElementName(child);
+      const childIdentifier = t.identifier(childName);
+      // Chain call + member expressions here since each nested JSX element
+      // is a chained call expression on the last call expression
+      // e.g.
+      // app.route() -> app.route.get()
+      // app.route.get() -> app.route().get().post()
+      const currentMemberExpression = t.memberExpression(lastCallExpression, childIdentifier);
+      // return the expression for the next iteration
+      lastCallExpression = t.callExpression(currentMemberExpression, []);
+    });
   }
-
-  return callExpressionForRoute;
+  return lastCallExpression;
 };
 
 const expressJsx = function({ types: t }) {
@@ -111,6 +123,8 @@ const express = require('express');
 <app>
   <route route="/resource">
     <get />
+    <post />
+    <put />
   </route>
   <listen port={8080} />
 </app>
