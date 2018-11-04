@@ -122,9 +122,16 @@ const express = require('express');
 
 <app>
   <route route="/resource">
-    <get />
-    <post />
-    <put />
+    <get
+      middleware={(req, res, next) => {
+        res.send(200);
+      }}
+    />
+    <post>
+      {(req, res, next) => {
+        res.send(200);
+      }}
+    </post>
   </route>
   <listen port={8080} />
 </app>
