@@ -70,8 +70,6 @@ const buildRouteCallExpression = (t, node) => {
   const routeIdentifier = t.identifier('route');
   const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
   const { path } = getAttributesAsObj(node);
-
-  console.log(path);
   const callExpressionForRoute = t.callExpression(
     memberExpression,
     [t.stringLiteral(path)]
