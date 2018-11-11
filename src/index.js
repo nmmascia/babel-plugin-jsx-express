@@ -1,22 +1,8 @@
 const babel = require('@babel/core');
 
-const getElementName = (node) => {
-	return node.openingElement.name.name;
-};
-
-const getAttributesAsObj = (node) => {
-	if (!node.openingElement.attributes.length) return [];
-	return node.openingElement.attributes.reduce((acc, curr) => {
-		/*
-      If we're looking at a JSXExpressionContainer
-      we'll have different node structure than if
-      the prop is just a string literal
-    */
-		const value = curr.value.type === 'JSXExpressionContainer' ? curr.value.expression.value : curr.value.value;
-
-		return Object.assign({}, acc, { [curr.name.name]: value });
-	}, {});
-};
+const buildListen = require('./builders/listen');
+const getAttributes = require('./utils/get-attributes');
+const getElementName = require('./utils/get-element-name');
 
 const getMiddlewareForNode = (t, node) => {
 	if (node.children.length) {
@@ -47,7 +33,7 @@ const buildListenExpression = (t, node) => {
 	const appIdentifier = t.identifier('app');
 	const listenIdentifier = t.identifier('listen');
 	const memberExpression = t.memberExpression(appIdentifier, listenIdentifier);
-	const { port } = getAttributesAsObj(node);
+	const { port } = getAttributes(t, node);
 
 	return t.callExpression(memberExpression, [ t.numericLiteral(port) ]);
 };
@@ -57,7 +43,7 @@ const buildRouteCallExpression = (t, node) => {
 	const appIdentifier = t.identifier('app');
 	const routeIdentifier = t.identifier('route');
 	const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
-	const { path } = getAttributesAsObj(node);
+	const { path } = getAttributes(t, node);
 	const callExpressionForRoute = t.callExpression(memberExpression, [ t.stringLiteral(path) ]);
 
 	// Build out the call expressions
@@ -85,7 +71,7 @@ const buildRouteCallExpression = (t, node) => {
 const buildMiddlewareExpression = (t, node) => {
 	const appIdentifier = t.identifier('app');
 	const middlewareIdentifier = t.identifier(getElementName(node));
-	const { path } = getAttributesAsObj(node);
+	const { path } = getAttributes(t, node);
 	const middleware = getMiddlewareForNode(t, node);
 	const memberExpression = t.memberExpression(appIdentifier, middlewareIdentifier);
 	return t.callExpression(memberExpression, [ t.stringLiteral(path), middleware ]);
@@ -101,13 +87,15 @@ const expressJsx = function({ types: t }) {
 					return;
 				}
 
+				const appIdentifier = t.identifier('app');
+
 				// Iterate over app children
 				const appExpressions = t.react.buildChildren(path.node).map((child) => {
 					const childName = getElementName(child);
 
 					// Build out app.listen();
 					if (childName === 'listen') {
-						return buildListenExpression(t, child);
+						return buildListen(t, child, appIdentifier);
 					}
 
 					// Build out app.route()
