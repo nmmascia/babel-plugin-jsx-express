@@ -14,10 +14,7 @@
   "dependencies": {
     "@babel/plugin-syntax-jsx": "^7.0.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/nmmascia/babel-plugin-jsx-express"
-  },
+  "repository": "github:nmmascia/babel-plugin-jsx-express",
   "bugs": {
     "url": "https://github.com/nmmascia/babel-plugin-jsx-express/issues"
   }
