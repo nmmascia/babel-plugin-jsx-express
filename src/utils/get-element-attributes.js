@@ -24,7 +24,7 @@ module.exports = (types, node_) => {
 
 	let callbackAttributeFromChildren = {};
 	if (node_.children.length) {
-    const child = node_.children.find(types.isJSXExpressionContainer);
+		const child = node_.children.find(types.isJSXExpressionContainer);
 		if (child) callbackAttributeFromChildren = { callback: child.expression };
 	}
 
