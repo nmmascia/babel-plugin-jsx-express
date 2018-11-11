@@ -1,9 +1,9 @@
-const getAttributes = require('../utils/get-attributes');
+const getElementAttributes = require('../utils/get-element-attributes');
 
 module.exports = (types, listenNode, applicationIdentifier) => {
 	const listenIdentifier = types.identifier('listen');
 	const memberExpression = types.memberExpression(applicationIdentifier, listenIdentifier);
-  const { port, host, /* backlog, */ callback } = getAttributes(types, listenNode);
+  const { port, host, /* backlog, */ callback } = getElementAttributes(types, listenNode);
   const callExpressionArguments = [];
   if (port) callExpressionArguments.push(types.numericLiteral(port));
   if (host) callExpressionArguments.push(types.stringLiteral(host));
