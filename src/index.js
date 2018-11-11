@@ -7,23 +7,6 @@ const buildMiddleware = require('./builders/middleware');
 const getElementAttributes = require('./utils/get-element-attributes');
 const getElementName = require('./utils/get-element-name');
 
-const getMiddlewareForNode = (t, node) => {
-	if (node.children.length) {
-		// Find the middleware passed as a function child
-		const { expression } = node.children.find((child) => {
-			return child.type === 'JSXExpressionContainer';
-		});
-		return expression;
-	} else {
-		// Find the middleware passed via middleware prop
-		const middle = node.openingElement.attributes.find((attr) => {
-			return attr.name.name === 'middleware';
-		}).value.expression;
-
-		return middle;
-	}
-};
-
 const buildRouteCallExpression = (t, node) => {
 	// Build out call expresion for app.route()
 	const appIdentifier = t.identifier('app');
@@ -40,7 +23,7 @@ const buildRouteCallExpression = (t, node) => {
 		children.forEach((child) => {
 			const childName = getElementName(child);
 			const childIdentifier = t.identifier(childName);
-			const middleware = getMiddlewareForNode(t, child);
+			const { callback } = getElementAttributes(t, child);
 			// Chain call + member expressions here since each nested JSX element
 			// is a chained call expression on the last call expression
 			// e.g.
@@ -48,7 +31,7 @@ const buildRouteCallExpression = (t, node) => {
 			// app.route.get() -> app.route().get().post()
 			const currentMemberExpression = t.memberExpression(lastCallExpression, childIdentifier);
 			// return the expression for the next iteration
-			lastCallExpression = t.callExpression(currentMemberExpression, [ middleware ]);
+			lastCallExpression = t.callExpression(currentMemberExpression, [ callback ]);
 		});
 	}
 	return lastCallExpression;
@@ -100,7 +83,7 @@ const express = require('express');
 <app>
   <route path="/resource">
     <get
-      middleware={(req, res, next) => {
+      callback={(req, res, next) => {
         res.send(200);
       }}
     />
