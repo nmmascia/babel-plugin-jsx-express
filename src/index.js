@@ -1,5 +1,6 @@
 const babel = require('@babel/core');
 
+const buildApp = require('./builders/app');
 const buildListen = require('./builders/listen');
 const getAttributes = require('./utils/get-attributes');
 const getElementName = require('./utils/get-element-name');
@@ -27,15 +28,6 @@ const buildAppInitDeclaration = (t) => {
 	const variableDeclarator = t.variableDeclarator(appIdentifier, t.callExpression(expressIdentifier, []));
 
 	return t.variableDeclaration('const', [ variableDeclarator ]);
-};
-
-const buildListenExpression = (t, node) => {
-	const appIdentifier = t.identifier('app');
-	const listenIdentifier = t.identifier('listen');
-	const memberExpression = t.memberExpression(appIdentifier, listenIdentifier);
-	const { port } = getAttributes(t, node);
-
-	return t.callExpression(memberExpression, [ t.numericLiteral(port) ]);
 };
 
 const buildRouteCallExpression = (t, node) => {
@@ -108,7 +100,7 @@ const expressJsx = function({ types: t }) {
 				});
 
 				// Build app declaration
-				const appVariableDeclations = buildAppInitDeclaration(t);
+				const appVariableDeclations = buildApp(t, appIdentifier);
 
 				// Replace app
 				path.replaceWithMultiple([ appVariableDeclations, ...appExpressions ]);
@@ -147,7 +139,12 @@ const express = require('express');
     }}
   </get>
 
-  <listen port={8080} />
+	<listen
+		port={8080}
+		callback={(req, res) => {
+			res.send(200);
+		}}
+	/>
 </app>
 `;
 

@@ -4,9 +4,17 @@ module.exports = (types, node_) => {
   let attributesFromProps = {};
   if (node.attributes.length) {
     attributesFromProps = node.attributes.reduce((acc, { name: nameNode, value: valueNode }) => {
-      const value = types.isJSXExpressionContainer(valueNode)
-        ? valueNode.expression.value
-        : valueNode.value;
+      let value;
+
+      if (types.isJSXExpressionContainer(valueNode)) {
+        if (types.isLiteral(valueNode.expression)) {
+          value = valueNode.expression.value;
+        } else {
+          value = valueNode.expression;
+        }
+      } else {
+        value = valueNode.value;
+      }
 
       const name = nameNode.name;
 
