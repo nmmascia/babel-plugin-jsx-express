@@ -107,12 +107,7 @@ const express = require('express');
     }}
   </get>
 
-	<listen
-		port={8080}
-		callback={(req, res) => {
-			res.send(200);
-		}}
-	/>
+	<listen port={8080} />
 </app>
 `;
 
