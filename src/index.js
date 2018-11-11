@@ -3,75 +3,29 @@ const babel = require('@babel/core');
 const buildApp = require('./builders/app');
 const buildListen = require('./builders/listen');
 const buildMiddleware = require('./builders/middleware');
+const buildRoute = require('./builders/route');
 
 const getElementAttributes = require('./utils/get-element-attributes');
 const getElementName = require('./utils/get-element-name');
 
-const buildRouteCallExpression = (t, node) => {
-	// Build out call expresion for app.route()
-	const appIdentifier = t.identifier('app');
-	const routeIdentifier = t.identifier('route');
-	const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
-	const { path } = getElementAttributes(t, node);
-	const callExpressionForRoute = t.callExpression(memberExpression, [ t.stringLiteral(path) ]);
-
-	// Build out the call expressions
-	// for nested get, post, put, etc.
-	let lastCallExpression = callExpressionForRoute;
-	const children = t.react.buildChildren(node);
-	if (children.length) {
-		children.forEach((child) => {
-			const childName = getElementName(child);
-			const childIdentifier = t.identifier(childName);
-			const { callback } = getElementAttributes(t, child);
-			// Chain call + member expressions here since each nested JSX element
-			// is a chained call expression on the last call expression
-			// e.g.
-			// app.route() -> app.route.get()
-			// app.route.get() -> app.route().get().post()
-			const currentMemberExpression = t.memberExpression(lastCallExpression, childIdentifier);
-			// return the expression for the next iteration
-			lastCallExpression = t.callExpression(currentMemberExpression, [ callback ]);
-		});
-	}
-	return lastCallExpression;
-};
-
-const expressJsx = function({ types: t }) {
+const expressJsx = function({ types }) {
 	return {
 		inherits: require('@babel/plugin-syntax-jsx').default,
 		visitor: {
 			JSXElement: function(path) {
-				// Return cases
-				if (getElementName(path.node) !== 'app') {
-					return;
-				}
-
-				const appIdentifier = t.identifier('app');
-
-				// Iterate over app children
-				const appExpressions = t.react.buildChildren(path.node).map((child) => {
-					const childName = getElementName(child);
-
-					// Build out app.listen();
-					if (childName === 'listen') {
-						return buildListen(t, child, appIdentifier);
+				const appIdentifier = types.identifier('app');
+				const appDeclaration = buildApp(types, appIdentifier);
+				const appExpressions = types.react.buildChildren(path.node).map((child) => {
+					switch (getElementName(child)) {
+						case 'listen':
+							return buildListen(types, child, appIdentifier);
+						case 'route':
+							return buildRoute(types, child, appIdentifier);
+						default:
+							return buildMiddleware(types, child, appIdentifier);
 					}
-
-					// Build out app.route()
-					if (childName === 'route') {
-						const routeCallExpression = buildRouteCallExpression(t, child);
-						return routeCallExpression;
-					}
-
-					return buildMiddleware(t, child, appIdentifier);
 				});
-
-				// Build app declaration
-				const appVariableDeclations = buildApp(t, appIdentifier);
-
-				// Replace app
-				path.replaceWithMultiple([ appVariableDeclations, ...appExpressions ]);
+				path.replaceWithMultiple([ appDeclaration, ...appExpressions ]);
 			}
 		}
 	};
