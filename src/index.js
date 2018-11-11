@@ -9,7 +9,7 @@ module.exports = function({ types }) {
 		inherits: require('@babel/plugin-syntax-jsx').default,
 		visitor: {
 			JSXElement: function(path) {
-				const appIdentifier = types.identifier('app');
+				const appIdentifier = types.identifier(getElementName(path.node));
 				const appDeclaration = buildApp(types, appIdentifier);
 				const appExpressions = types.react.buildChildren(path.node).map((child) => {
 					switch (getElementName(child)) {
