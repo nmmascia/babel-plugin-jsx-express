@@ -22,14 +22,6 @@ const getMiddlewareForNode = (t, node) => {
 	}
 };
 
-const buildAppInitDeclaration = (t) => {
-	const appIdentifier = t.identifier('app');
-	const expressIdentifier = t.identifier('express');
-	const variableDeclarator = t.variableDeclarator(appIdentifier, t.callExpression(expressIdentifier, []));
-
-	return t.variableDeclaration('const', [ variableDeclarator ]);
-};
-
 const buildRouteCallExpression = (t, node) => {
 	// Build out call expresion for app.route()
 	const appIdentifier = t.identifier('app');
