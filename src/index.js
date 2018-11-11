@@ -2,7 +2,9 @@ const babel = require('@babel/core');
 
 const buildApp = require('./builders/app');
 const buildListen = require('./builders/listen');
-const getAttributes = require('./utils/get-attributes');
+const buildMiddleware = require('./builders/middleware');
+
+const getElementAttributes = require('./utils/get-element-attributes');
 const getElementName = require('./utils/get-element-name');
 
 const getMiddlewareForNode = (t, node) => {
@@ -27,7 +29,7 @@ const buildRouteCallExpression = (t, node) => {
 	const appIdentifier = t.identifier('app');
 	const routeIdentifier = t.identifier('route');
 	const memberExpression = t.memberExpression(appIdentifier, routeIdentifier);
-	const { path } = getAttributes(t, node);
+	const { path } = getElementAttributes(t, node);
 	const callExpressionForRoute = t.callExpression(memberExpression, [ t.stringLiteral(path) ]);
 
 	// Build out the call expressions
@@ -50,15 +52,6 @@ const buildRouteCallExpression = (t, node) => {
 		});
 	}
 	return lastCallExpression;
-};
-
-const buildMiddlewareExpression = (t, node) => {
-	const appIdentifier = t.identifier('app');
-	const middlewareIdentifier = t.identifier(getElementName(node));
-	const { path } = getAttributes(t, node);
-	const middleware = getMiddlewareForNode(t, node);
-	const memberExpression = t.memberExpression(appIdentifier, middlewareIdentifier);
-	return t.callExpression(memberExpression, [ t.stringLiteral(path), middleware ]);
 };
 
 const expressJsx = function({ types: t }) {
@@ -88,7 +81,7 @@ const expressJsx = function({ types: t }) {
 						return routeCallExpression;
 					}
 
-					return buildMiddlewareExpression(t, child);
+					return buildMiddleware(t, child, appIdentifier);
 				});
 
 				// Build app declaration
@@ -120,7 +113,7 @@ const express = require('express');
 
   <get
     path="/health"
-    middleware={(req, res, next) => {
+    callback={(req, res, next) => {
       res.send(200);
     }}
   />
